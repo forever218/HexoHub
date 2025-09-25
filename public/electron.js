@@ -703,3 +703,91 @@ function compareVersions(current, latest) {
   
   return false;
 }
+
+// 列出 Hexo 插件与主题
+ipcMain.handle('list-hexo-plugins', async (event, projectPath) => {
+  const fs = require('fs').promises;
+  const path = require('path');
+  const result = { plugins: [], themes: [], activeTheme: null };
+  try {
+    const pkgPath = path.join(projectPath, 'package.json');
+    const configPath = path.join(projectPath, '_config.yml');
+    const themesDir = path.join(projectPath, 'themes');
+
+    // 读取 package.json
+    try {
+      const pkgRaw = await fs.readFile(pkgPath, 'utf8');
+      const pkg = JSON.parse(pkgRaw);
+      const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+      for (const [name, version] of Object.entries(allDeps)) {
+        if (name.startsWith('hexo-theme-')) continue; // 主题单独处理
+        if (name.startsWith('hexo-')) {
+          result.plugins.push({ name, version });
+        }
+      }
+    } catch (e) {
+      // ignore if package.json missing
+    }
+
+    // 读取主题目录
+    try {
+      const items = await fs.readdir(themesDir, { withFileTypes: true });
+      for (const dirent of items) {
+        if (dirent.isDirectory()) {
+          const themeName = dirent.name;
+            // 尝试读取主题 package.json 获取版本
+          let version = '';
+          try {
+            const themePkgRaw = await fs.readFile(path.join(themesDir, themeName, 'package.json'), 'utf8');
+            const themePkg = JSON.parse(themePkgRaw);
+            version = themePkg.version || '';
+          } catch {}
+          result.themes.push({ name: themeName, version });
+        }
+      }
+    } catch (e) {
+      // no themes folder
+    }
+
+    // 解析 _config.yml 获取当前主题
+    try {
+      const yamlRaw = await fs.readFile(configPath, 'utf8');
+      const match = yamlRaw.match(/^[ \t]*theme:\s*(["']?)([\w-]+)\1/m);
+      if (match) {
+        result.activeTheme = match[2];
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    return { success: true, ...result };
+  } catch (error) {
+    return { success: false, error: error.message, ...result };
+  }
+});
+
+// 安装 Hexo 插件
+ipcMain.handle('install-hexo-plugin', async (event, projectPath, pluginName) => {
+  const { exec } = require('child_process');
+  const util = require('util');
+  const execPromise = util.promisify(exec);
+  try {
+    const { stdout, stderr } = await execPromise(`npm install ${pluginName} --save`, { cwd: projectPath, shell: true });
+    return { success: true, stdout, stderr };
+  } catch (error) {
+    return { success: false, error: error.message, stdout: error.stdout, stderr: error.stderr };
+  }
+});
+
+// 卸载 Hexo 插件
+ipcMain.handle('uninstall-hexo-plugin', async (event, projectPath, pluginName) => {
+  const { exec } = require('child_process');
+  const util = require('util');
+  const execPromise = util.promisify(exec);
+  try {
+    const { stdout, stderr } = await execPromise(`npm uninstall ${pluginName} --save`, { cwd: projectPath, shell: true });
+    return { success: true, stdout, stderr };
+  } catch (error) {
+    return { success: false, error: error.message, stdout: error.stdout, stderr: error.stderr };
+  }
+});

@@ -319,6 +319,26 @@ export interface I18nTexts {
   hexoInstalled: string;
   hexoNotInstalled: string;
   environmentCheckFailed: string;
+
+  // 插件管理
+  plugins: string;
+  themes: string;
+  pluginManager: string;
+  installedPlugins: string;
+  installedThemes: string;
+  activeTheme: string;
+  installPlugin: string;
+  uninstallPlugin: string;
+  installingPlugin: string;
+  uninstallingPlugin: string;
+  pluginNamePlaceholder: string;
+  refresh: string;
+  noPlugins: string;
+  noThemes: string;
+  pluginInstallSuccess: string;
+  pluginUninstallSuccess: string;
+  pluginInstallFailed: string;
+  pluginUninstallFailed: string;
 }
 
 export const i18nTexts: Record<Language, I18nTexts> = {
@@ -676,6 +696,25 @@ console.log('Hello, Hexo!');
     hexoInstalled: 'hexo 已安装: {version}',
     hexoNotInstalled: 'hexo 未安装: {error}',
     environmentCheckFailed: '检查环境失败: {error}',
+  // 插件管理
+  plugins: '插件',
+  themes: '主题',
+  pluginManager: '插件管理',
+  installedPlugins: '已安装插件',
+  installedThemes: '已安装主题',
+  activeTheme: '当前主题: {theme}',
+  installPlugin: '安装',
+  uninstallPlugin: '卸载',
+  installingPlugin: '正在安装 {name}...',
+  uninstallingPlugin: '正在卸载 {name}...',
+  pluginNamePlaceholder: '输入插件名，例如 hexo-generator-feed',
+  refresh: '刷新',
+  noPlugins: '暂无插件',
+  noThemes: '暂无主题',
+  pluginInstallSuccess: '插件安装成功',
+  pluginUninstallSuccess: '插件卸载成功',
+  pluginInstallFailed: '插件安装失败: {error}',
+  pluginUninstallFailed: '插件卸载失败: {error}',
   },
 
   en: {
@@ -1032,6 +1071,26 @@ console.log('Hello, Hexo!');
     hexoInstalled: 'hexo installed: {version}',
     hexoNotInstalled: 'hexo not installed: {error}',
     environmentCheckFailed: 'Environment check failed: {error}',
+    
+    // 插件管理
+    plugins: 'Plugins',
+    themes: 'Themes',
+    pluginManager: 'Plugin Manager',
+    installedPlugins: 'Installed Plugins',
+    installedThemes: 'Installed Themes',
+    activeTheme: 'Active Theme: {theme}',
+    installPlugin: 'Install',
+    uninstallPlugin: 'Uninstall',
+    installingPlugin: 'Installing {name}...',
+    uninstallingPlugin: 'Uninstalling {name}...',
+    pluginNamePlaceholder: 'Enter plugin name, e.g. hexo-generator-feed',
+    refresh: 'Refresh',
+    noPlugins: 'No plugins',
+    noThemes: 'No themes',
+    pluginInstallSuccess: 'Plugin installed successfully',
+    pluginUninstallSuccess: 'Plugin uninstalled successfully',
+    pluginInstallFailed: 'Plugin install failed: {error}',
+    pluginUninstallFailed: 'Plugin uninstall failed: {error}',
   }
 };
 

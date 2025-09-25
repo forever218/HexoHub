@@ -46,6 +46,8 @@ import {
   Lightbulb,
   BarChart3
 } from 'lucide-react';
+// 补充插件页需要的图标
+import { Plug } from 'lucide-react';
 import { Language, getTexts } from '@/utils/i18n';
 import { MarkdownEditor } from '@/components/markdown-editor';
 import { MarkdownPreview } from '@/components/markdown-preview';
@@ -61,6 +63,7 @@ import { CreateHexoDialog } from '@/components/create-hexo-dialog';
 import { CustomTitlebar } from '@/components/custom-titlebar';
 import { AIInspirationDialog } from '@/components/ai-inspiration-dialog';
 import { AIAnalysisDialog } from '@/components/ai-analysis-dialog';
+import { PluginManager } from '@/components/plugin-manager';
 
 interface Post {
   name: string;
@@ -2153,6 +2156,19 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                 <Terminal className="w-4 h-4 mr-2" />
                 {t.viewLogs}
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => {
+                  setSelectedPost(null);
+                  setMainView('plugins');
+                }}
+                disabled={!isValidHexoProject || isLoading}
+              >
+                <Plug className="w-4 h-4 mr-2" />
+                {t.pluginManager}
+              </Button>
             </CardContent>
           </Card>
 
@@ -2294,6 +2310,10 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                   )}
                 </CardContent>
               </Card>
+            </div>
+          ) : mainView === 'plugins' ? (
+            <div className="flex-1 p-6 overflow-auto">
+              <PluginManager projectPath={hexoPath} language={language} disabled={!isValidHexoProject || isLoading} />
             </div>
           ) : mainView === 'posts' ? (
             selectedPost ? (
