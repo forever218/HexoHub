@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "HexoHub",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "identifier": "com.hexo.desktop",
   "build": {
     "frontendDist": "../out",
@@ -30,7 +30,9 @@
       "csp": "default-src 'self' ipc: http://ipc.localhost http://localhost:* ws://localhost:* http://* https://*; connect-src 'self' ipc: http://ipc.localhost http://localhost:* ws://localhost:* ws://* wss://* http://* https://*; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:*; style-src 'self' 'unsafe-inline' http://localhost:* http://* https://*; img-src 'self' asset: http://asset.localhost http://localhost:* data: blob: http://* https://*; font-src 'self' http://localhost:* data: http://* https://*; frame-src 'self' http://localhost:* http://127.0.0.1:* http://* https://*",
       "assetProtocol": {
         "enable": true,
-        "scope": ["**"]
+        "scope": [
+          "**"
+        ]
       }
     }
   },
@@ -46,7 +48,10 @@
       "nsis": {
         "installerIcon": "icons/icon.ico",
         "installMode": "currentUser",
-        "languages": ["SimpChinese", "English"],
+        "languages": [
+          "SimpChinese",
+          "English"
+        ],
         "displayLanguageSelector": true,
         "compression": "lzma",
         "startMenuFolder": "HexoHub",
