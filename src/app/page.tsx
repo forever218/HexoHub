@@ -845,6 +845,127 @@ export default function Home() {
     }
   };
 
+  // 提取标签 - 支持多种 Hexo 格式
+  const parseTags = (text: string): string[] => {
+    // 1. 先把整个 frontmatter 按行分割成数组
+    // 例如：['title: 测试', 'date: 2025-10-07', 'tags:', '  - 测试1', '  - 测试2', ...]
+    const lines = text.split('\n');
+    const tags: string[] = [];  // 用来存储找到的标签
+    let inTagsSection = false;  // 标记：我们是否在 tags 区域内？
+
+    // 2. 逐行遍历
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];           // 原始行（保留缩进）
+      const trimmedLine = line.trim(); // 去掉前后空格的行
+
+      // === 第一步：找到 tags: 这一行 ===
+      if (trimmedLine.startsWith('tags:')) {
+        const afterColon = trimmedLine.substring(5).trim();  // 取 "tags:" 后面的内容
+
+        // 格式1: tags: [tag1, tag2, tag3] - 行内数组格式
+        if (afterColon.startsWith('[')) {
+          const arrayMatch = afterColon.match(/\[(.*?)\]/);
+          if (arrayMatch) {
+            return arrayMatch[1]
+              .split(',')
+              .map(tag => tag.trim())
+              .filter(tag => tag);
+          }
+        }
+        // 格式2: tags: single-tag - 单个标签在同一行
+        else if (afterColon.length > 0) {
+          return [afterColon];
+        }
+        // 格式3: tags: 后面是空的，说明标签在下面的行（多行列表格式）
+        // 例如：
+        // tags:
+        //   - tag1
+        //   - tag2
+        else {
+          inTagsSection = true;  // 设置标记：我们进入 tags 区域了！
+          continue;              // 看下一行
+        }
+      }
+
+      // === 第二步：如果我们在 tags 区域内，开始收集标签 ===
+      if (inTagsSection) {
+        // 退出条件：遇到一行不是以 - 开头，也不是缩进的行
+        // 例如遇到 "categories:" 或其他字段就退出
+        if (trimmedLine && !trimmedLine.startsWith('-') && !line.startsWith(' ') && !line.startsWith('\t')) {
+          break;  // 退出循环，不再收集
+        }
+
+        // 收集标签：如果这行以 - 开头
+        if (trimmedLine.startsWith('-')) {
+          const tag = trimmedLine.substring(1).trim();  // 去掉 "-" 和空格，得到标签内容
+          if (tag) tags.push(tag);  // 添加到结果数组
+        }
+      }
+    }
+
+    return tags;
+  };
+
+  // 提取分类 - 支持多种 Hexo 格式（逻辑同 parseTags）
+  const parseCategories = (text: string): string[] => {
+    // 1. 先把整个 frontmatter 按行分割成数组
+    const lines = text.split('\n');
+    const categories: string[] = [];  // 用来存储找到的分类
+    let inCategoriesSection = false;  // 标记：我们是否在 categories 区域内？
+
+    // 2. 逐行遍历
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];           // 原始行（保留缩进）
+      const trimmedLine = line.trim(); // 去掉前后空格的行
+
+      // === 第一步：找到 categories: 这一行 ===
+      if (trimmedLine.startsWith('categories:')) {
+        const afterColon = trimmedLine.substring(11).trim();  // 取 "categories:" 后面的内容
+
+        // 格式1: categories: [cat1, cat2, cat3] - 行内数组格式
+        if (afterColon.startsWith('[')) {
+          const arrayMatch = afterColon.match(/\[(.*?)\]/);
+          if (arrayMatch) {
+            return arrayMatch[1]
+              .split(',')
+              .map(cat => cat.trim())
+              .filter(cat => cat);
+          }
+        }
+        // 格式2: categories: single-category - 单个分类在同一行
+        else if (afterColon.length > 0) {
+          return [afterColon];
+        }
+        // 格式3: categories: 后面是空的，说明分类在下面的行（多行列表格式）
+        // 例如：
+        // categories:
+        //   - cat1
+        //   - cat2
+        else {
+          inCategoriesSection = true;  // 设置标记：我们进入 categories 区域了！
+          continue;                    // 跳过当前行，继续看下一行
+        }
+      }
+
+      // === 第二步：如果我们在 categories 区域内，开始收集分类 ===
+      if (inCategoriesSection) {
+        // 退出条件：遇到一行不是以 - 开头，也不是缩进的行
+        // 例如遇到其他字段就退出
+        if (trimmedLine && !trimmedLine.startsWith('-') && !line.startsWith(' ') && !line.startsWith('\t')) {
+          break;  // 退出循环，不再收集
+        }
+
+        // 收集分类：如果这行以 - 开头
+        if (trimmedLine.startsWith('-')) {
+          const cat = trimmedLine.substring(1).trim();  // 去掉 "-" 和空格，得到分类内容
+          if (cat) categories.push(cat);  // 添加到结果数组
+        }
+      }
+    }
+
+    return categories;
+  };
+
   // 应用筛选
   const applyFilter = async () => {
     if (!currentFilter) {
@@ -868,26 +989,16 @@ export default function Home() {
             const frontMatter = frontMatterMatch[1];
             
             if (currentFilter.type === 'tag') {
-              // 检查标签
-              const tagsMatch = frontMatter.match(/^tags:\s*([\s\S]*?)(?=\n\w|\n*$)/m);
-              if (tagsMatch) {
-                const tags = tagsMatch[1].split('\n')
-                  .map(line => line.trim().replace(/^\-\s*/, ''))
-                  .filter(tag => tag);
-                if (tags.includes(currentFilter.value)) {
-                  filtered.push(post);
-                }
+              // 使用新的parseTags函数检查标签
+              const tags = parseTags(frontMatter);
+              if (tags.includes(currentFilter.value)) {
+                filtered.push(post);
               }
             } else if (currentFilter.type === 'category') {
-              // 检查分类
-              const categoriesMatch = frontMatter.match(/^categories:\s*([\s\S]*?)(?=\n\w|\n*$)/m);
-              if (categoriesMatch) {
-                const categories = categoriesMatch[1].split('\n')
-                  .map(line => line.trim().replace(/^\-\s*/, ''))
-                  .filter(cat => cat);
-                if (categories.includes(currentFilter.value)) {
-                  filtered.push(post);
-                }
+              // 使用新的parseCategories函数检查分类
+              const categories = parseCategories(frontMatter);
+              if (categories.includes(currentFilter.value)) {
+                filtered.push(post);
               }
             }
           }
