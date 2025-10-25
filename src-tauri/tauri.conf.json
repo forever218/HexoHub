@@ -48,10 +48,7 @@
       "nsis": {
         "installerIcon": "icons/icon.ico",
         "installMode": "currentUser",
-        "languages": [
-          "SimpChinese",
-          "English"
-        ],
+        "languages": ["zh-CN", "en-US"],
         "displayLanguageSelector": true,
         "compression": "lzma",
         "startMenuFolder": "HexoHub",
