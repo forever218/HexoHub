@@ -377,7 +377,19 @@ export function UpdateChecker({ currentVersion, repoOwner, repoName, autoCheckUp
                       </div>
                       <Button 
                         size="sm" 
-                        onClick={() => window.open(asset.browser_download_url, '_blank')}
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          try {
+                            await openExternalLink(asset.browser_download_url);
+                          } catch (error) {
+                            console.error('下载失败:', error);
+                            toast({
+                              title: t.downloadFailed || "下载失败",
+                              description: error instanceof Error ? error.message : t.unknownError,
+                              variant: "error",
+                            });
+                          }
+                        }}
                       >
                         <Download className="w-4 h-4 mr-2" />
                         {t.download}
