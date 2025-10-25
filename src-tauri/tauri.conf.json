@@ -58,7 +58,8 @@
         "installerHooks": "../public/installer.nsh"
       },
       "wix": {
-        "language": ["zh-CN", "en-US"]
+        "language": ["zh-CN", "en-US"],
+        "template": "main.wxs"
       }
     }
   }

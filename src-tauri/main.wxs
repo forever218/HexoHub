@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="HexoHub" Language="2052" Version="3.1.2" Manufacturer="HexoHub Team" UpgradeCode="PUT-GUID-HERE">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" Description="HexoHub Desktop Application" Comments="HexoHub - 一款强大的Hexo博客管理工具" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of HexoHub is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Feature Id="ProductFeature" Title="HexoHub" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+    </Feature>
+
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <UIRef Id="WixUI_InstallDir" />
+
+    <!-- 添加中文支持 -->
+    <WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
+    <WixVariable Id="WixUIBannerBmp" Value="banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="dialog.bmp" />
+
+    <!-- 设置默认语言为中文 -->
+    <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
+    <Property Id="WixUI_Mode" Value="InstallDir" />
+  </Product>
+
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="HexoHub" />
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="HexoHub"/>
+      </Directory>
+      <Directory Id="DesktopFolder" Name="Desktop" />
+    </Directory>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <!-- 文件将在这里自动添加 -->
+    </ComponentGroup>
+  </Fragment>
+</Wix>
