@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "HexoHub",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "identifier": "com.hexo.desktop",
   "build": {
     "frontendDist": "../out",
@@ -48,7 +48,10 @@
       "nsis": {
         "installerIcon": "icons/icon.ico",
         "installMode": "currentUser",
-        "languages": ["zh-CN", "en-US"],
+        "languages": [
+          "zh-CN",
+          "en-US"
+        ],
         "displayLanguageSelector": true,
         "compression": "lzma",
         "startMenuFolder": "HexoHub",
