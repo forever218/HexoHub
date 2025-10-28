@@ -47,16 +47,52 @@ export function UpdateChecker({ currentVersion, repoOwner, repoName, autoCheckUp
   const [updateAvailable, setUpdateAvailable] = useState<boolean>(false);
   const [lastChecked, setLastChecked] = useState<string | null>(null);
   const [platform, setPlatform] = useState<string>('browser');
+  const [osType, setOsType] = useState<string>('unknown');
   const { toast } = useToast();
   // 获取当前语言的文本
   const t = getTexts(language);
 
+  // 检测操作系统类型
+  const detectOS = (): string => {
+    if (typeof window === 'undefined') return 'unknown';
+    
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const platform = window.navigator.platform.toLowerCase();
+    
+    if (platform.includes('win') || userAgent.includes('windows')) {
+      return 'windows';
+    } else if (platform.includes('mac') || userAgent.includes('mac')) {
+      return 'macos';
+    } else if (platform.includes('linux') || userAgent.includes('linux')) {
+      return 'linux';
+    }
+    
+    return 'unknown';
+  };
+
   // 从localStorage加载上次检查时间和自动更新设置
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // 获取当前平台
+      // 获取当前框架平台
       const env = getDesktopEnvironment();
       setPlatform(env);
+      
+      // 检测操作系统类型
+      const detectedOS = detectOS();
+      setOsType(detectedOS);
+      
+      // 如果是 Tauri 环境，使用官方 OS 插件
+      if (isTauri()) {
+        (async () => {
+          try {
+            const { platform: getPlatform } = await import('@tauri-apps/plugin-os');
+            const tauriOS = getPlatform();
+            setOsType(tauriOS);
+          } catch (error) {
+            console.error('Failed to get OS info from Tauri plugin:', error);
+          }
+        })();
+      }
       
       const savedLastChecked = localStorage.getItem('last-update-check');
       if (savedLastChecked) {
@@ -188,6 +224,63 @@ export function UpdateChecker({ currentVersion, repoOwner, repoName, autoCheckUp
     else return Math.round(bytes / 1048576 * 10) / 10 + ' MB';
   };
 
+  // 智能排序下载文件：优先展示当前框架和系统的文件
+  const sortAssetsByPriority = (assets: GitHubRelease['assets']) => {
+    const currentFramework = isTauri() ? 'tauri' : 'electron';
+    const currentOS = osType.toLowerCase();
+    
+    // 获取操作系统匹配关键词
+    const getOSKeywords = () => {
+      if (currentOS.includes('windows')) return ['windows', 'win'];
+      if (currentOS.includes('macos') || currentOS.includes('darwin')) return ['macos', 'darwin', 'dmg'];
+      if (currentOS.includes('linux')) return ['linux', 'appimage', 'deb'];
+      return [];
+    };
+    
+    const osKeywords = getOSKeywords();
+    
+    return [...assets].sort((a, b) => {
+      const nameA = a.name.toLowerCase();
+      const nameB = b.name.toLowerCase();
+      
+      // 计算优先级分数（分数越高越优先）
+      let scoreA = 0;
+      let scoreB = 0;
+      
+      // 框架匹配：+10分
+      if (nameA.includes(currentFramework)) scoreA += 10;
+      if (nameB.includes(currentFramework)) scoreB += 10;
+      
+      // 系统匹配：+5分
+      for (const keyword of osKeywords) {
+        if (nameA.includes(keyword)) scoreA += 5;
+        if (nameB.includes(keyword)) scoreB += 5;
+      }
+      
+      // 优先推荐的文件格式加分
+      if (currentOS.includes('windows')) {
+        // Windows: .exe 和 .msi
+        if (nameA.endsWith('.exe')) scoreA += 2;
+        if (nameB.endsWith('.exe')) scoreB += 2;
+        if (nameA.endsWith('.msi')) scoreA += 1;
+        if (nameB.endsWith('.msi')) scoreB += 1;
+      } else if (currentOS.includes('macos') || currentOS.includes('darwin')) {
+        // macOS: .dmg
+        if (nameA.endsWith('.dmg')) scoreA += 2;
+        if (nameB.endsWith('.dmg')) scoreB += 2;
+      } else if (currentOS.includes('linux')) {
+        // Linux: .AppImage > .deb
+        if (nameA.endsWith('.appimage')) scoreA += 2;
+        if (nameB.endsWith('.appimage')) scoreB += 2;
+        if (nameA.endsWith('.deb')) scoreA += 1;
+        if (nameB.endsWith('.deb')) scoreB += 1;
+      }
+      
+      // 按分数降序排序
+      return scoreB - scoreA;
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -233,9 +326,16 @@ export function UpdateChecker({ currentVersion, repoOwner, repoName, autoCheckUp
           <div className="flex items-center gap-2">
             <Badge variant="outline">{currentVersion}</Badge>
             {platform !== 'browser' && (
-              <Badge variant="secondary" className="capitalize">
-                {platform}
-              </Badge>
+              <>
+                <Badge variant="secondary" className="capitalize">
+                  {platform}
+                </Badge>
+                {osType !== 'unknown' && (
+                  <Badge variant="outline" className="capitalize">
+                    {osType}
+                  </Badge>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -367,35 +467,62 @@ export function UpdateChecker({ currentVersion, repoOwner, repoName, autoCheckUp
               <div className="space-y-2">
                 <h4 className="font-medium">{t.downloadLinks}</h4>
                 <div className="space-y-2">
-                  {latestRelease.assets.map((asset, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded-md">
-                      <div>
-                        <div className="font-medium">{asset.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatFileSize(asset.size)}
-                        </div>
-                      </div>
-                      <Button 
-                        size="sm" 
-                        onClick={async (e) => {
-                          e.preventDefault();
-                          try {
-                            await openExternalLink(asset.browser_download_url);
-                          } catch (error) {
-                            console.error('下载失败:', error);
-                            toast({
-                              title: t.downloadFailed || "下载失败",
-                              description: error instanceof Error ? error.message : t.unknownError,
-                              variant: "error",
-                            });
-                          }
-                        }}
+                  {sortAssetsByPriority(latestRelease.assets).map((asset, index) => {
+                    const isCurrentFramework = asset.name.toLowerCase().includes(isTauri() ? 'tauri' : 'electron');
+                    const currentOS = osType.toLowerCase();
+                    const assetName = asset.name.toLowerCase();
+                    const isCurrentOS = 
+                      (currentOS.includes('windows') && assetName.includes('windows')) ||
+                      (currentOS.includes('macos') && assetName.includes('macos')) ||
+                      (currentOS.includes('darwin') && assetName.includes('macos')) ||
+                      (currentOS.includes('linux') && assetName.includes('linux'));
+                    const isRecommended = isCurrentFramework && isCurrentOS;
+                    
+                    return (
+                      <div 
+                        key={index} 
+                        className={`flex items-center justify-between p-3 border rounded-md transition-all ${
+                          isRecommended 
+                            ? 'border-green-500 bg-green-50/50 dark:bg-green-950/20 ring-1 ring-green-500/20' 
+                            : ''
+                        }`}
                       >
-                        <Download className="w-4 h-4 mr-2" />
-                        {t.download}
-                      </Button>
-                    </div>
-                  ))}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className="font-medium">{asset.name}</div>
+                            {isRecommended && (
+                              <Badge variant="default" className="bg-green-600 text-xs">
+                                {language === 'zh' ? '推荐' : 'Recommended'}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {formatFileSize(asset.size)}
+                          </div>
+                        </div>
+                        <Button 
+                          size="sm"
+                          variant={isRecommended ? "default" : "outline"}
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            try {
+                              await openExternalLink(asset.browser_download_url);
+                            } catch (error) {
+                              console.error('下载失败:', error);
+                              toast({
+                                title: language === 'zh' ? '下载失败' : 'Download Failed',
+                                description: error instanceof Error ? error.message : t.unknownError,
+                                variant: "error",
+                              });
+                            }
+                          }}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          {t.download}
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
