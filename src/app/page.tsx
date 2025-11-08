@@ -44,7 +44,8 @@ import {
   Download,
   Upload,
   Lightbulb,
-  BarChart3
+  BarChart3,
+  ExternalLink
 } from 'lucide-react';
 import { Language, getTexts } from '@/utils/i18n';
 import { MarkdownEditorWrapper } from '@/components/markdown-editor-wrapper';
@@ -110,6 +111,7 @@ export default function Home() {
   const [iframeUrlMode, setIframeUrlMode] = useState<'hexo' | 'root'>('hexo'); // iframe地址获取方式，默认为hexo标准地址
   const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null); // 自动保存定时器
   const [editorMode, setEditorMode] = useState<'mode1' | 'mode2'>('mode1'); // 编辑模式，默认为模式1
+  const [isUsingExternalEditor, setIsUsingExternalEditor] = useState<boolean>(false); // 是否使用外部编辑器
   // 背景图相关状态
   const [backgroundImage, setBackgroundImage] = useState<string>(''); // 背景图片URL
   const [backgroundOpacity, setBackgroundOpacity] = useState<number>(1); // 背景透明度
@@ -2967,37 +2969,120 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedPost(null);
-                        }}
-                        disabled={isLoading}
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        返回列表
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={savePost}
-                        disabled={isLoading}
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        保存
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={deletePost}
-                        disabled={isLoading}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        删除
-                      </Button>
+                      {isUsingExternalEditor ? (
+                        // 外部编辑器模式：只显示重新加载按钮
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            if (!selectedPost || !isElectron) return;
 
+                            try {
+                              if (isTauri()) {
+                                const { invoke } = await import('@tauri-apps/api/core');
+                                const content = await invoke('read_file', { filePath: selectedPost.path });
+                                setPostContent(content as string);
+                              } else {
+                                const ipcRenderer = await getIpcRenderer();
+                                const content = await ipcRenderer.invoke('read-file', selectedPost.path);
+                                setPostContent(content);
+                              }
+
+                              setIsUsingExternalEditor(false);
+                              toast({
+                                title: '内容已重新加载',
+                                description: '已从文件重新加载最新内容',
+                              });
+                            } catch (error) {
+                              console.error('重新加载内容失败:', error);
+                              toast({
+                                title: '重新加载失败',
+                                description: error instanceof Error ? error.message : String(error),
+                                variant: 'error',
+                              });
+                            }
+                          }}
+                          disabled={isLoading}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          重新加载
+                        </Button>
+                      ) : (
+                        // 内部编辑器模式：显示所有按钮
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedPost(null);
+                            }}
+                            disabled={isLoading}
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            返回列表
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={async () => {
+                              if (!selectedPost || !isElectron) return;
+
+                              try {
+                                if (isTauri()) {
+                                  // Tauri 环境
+                                  const { invoke } = await import('@tauri-apps/api/core');
+                                  await invoke('open_with', { filePath: selectedPost.path });
+                                } else {
+                                  // Electron 环境
+                                  const ipcRenderer = await getIpcRenderer();
+                                  await ipcRenderer.invoke('open-with', selectedPost.path);
+                                }
+
+                                // 设置为使用外部编辑器
+                                setIsUsingExternalEditor(true);
+
+                                // 提示用户
+                                toast({
+                                  title: '已使用外部编辑器打开',
+                                  description: '文件已使用系统默认程序打开，您可以在外部编辑器中进行编辑。编辑完成后，请点击"重新加载"按钮获取最新内容。',
+                                  duration: 5000,
+                                });
+                              } catch (error) {
+                                console.error('打开文件失败:', error);
+                                toast({
+                                  title: '打开文件失败',
+                                  description: error instanceof Error ? error.message : String(error),
+                                  variant: 'error',
+                                });
+                              }
+                            }}
+                            disabled={isLoading}
+                            title="使用其他程序打开此文件"
+                          >
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            外部编辑器
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={savePost}
+                            disabled={isLoading}
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            保存
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={deletePost}
+                            disabled={isLoading}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            删除
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -3313,7 +3398,55 @@ ${selectedText}
 
                 {/* 编辑器区域 */}
                 <div className="flex-1">
-                  {editorMode === 'mode1' ? (
+                  {isUsingExternalEditor ? (
+                    // 使用外部编辑器时的提示信息
+                    <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+                      <div className="mb-4">
+                        <ExternalLink className="w-16 h-16 text-muted-foreground" />
+                      </div>
+                      <h3 className="text-xl font-semibold mb-2">正在使用外部编辑器</h3>
+                      <p className="text-muted-foreground mb-4 max-w-md">
+                        文件已使用系统默认程序打开，您可以在外部编辑器中进行编辑。
+                        编辑完成后，请点击下方按钮重新加载内容。
+                      </p>
+                      <div className="flex space-x-2">
+                        <Button 
+                          onClick={async () => {
+                            if (!selectedPost || !isElectron) return;
+
+                            try {
+                              if (isTauri()) {
+                                const { invoke } = await import('@tauri-apps/api/core');
+                                const content = await invoke('read_file', { filePath: selectedPost.path });
+                                setPostContent(content as string);
+                              } else {
+                                const ipcRenderer = await getIpcRenderer();
+                                const content = await ipcRenderer.invoke('read-file', selectedPost.path);
+                                setPostContent(content);
+                              }
+
+                              setIsUsingExternalEditor(false);
+                              toast({
+                                title: '内容已重新加载',
+                                description: '已从文件重新加载最新内容',
+                              });
+                            } catch (error) {
+                              console.error('重新加载内容失败:', error);
+                              toast({
+                                title: '重新加载失败',
+                                description: error instanceof Error ? error.message : String(error),
+                                variant: 'error',
+                              });
+                            }
+                          }}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          重新加载
+                        </Button>
+
+                      </div>
+                    </div>
+                  ) : editorMode === 'mode1' ? (
                     // 模式1：分离编辑和预览，需要手动切换
                     <>
                       {activeTab === 'editor' && (

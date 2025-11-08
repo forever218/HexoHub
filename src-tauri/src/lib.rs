@@ -824,6 +824,92 @@ async fn show_in_folder(path: String) -> Result<(), String> {
     }
 }
 
+// 使用系统"打开方式"对话框打开文件
+#[tauri::command]
+async fn open_with(file_path: String) -> Result<(), String> {
+    use std::path::Path;
+    use std::process::Command;
+
+    // 标准化路径（将正斜杠转换为反斜杠，仅在 Windows 上）
+    #[cfg(target_os = "windows")]
+    let normalized_path = file_path.replace("/", r"\");
+
+    #[cfg(not(target_os = "windows"))]
+    let normalized_path = file_path.clone();
+
+    println!("[Rust] open_with called with path: {}", file_path);
+    println!("[Rust] Normalized path: {}", normalized_path);
+
+    // 检查路径是否存在
+    if !Path::new(&normalized_path).exists() {
+        let error_msg = format!("Path does not exist: {}", normalized_path);
+        println!("[Rust] Error: {}", error_msg);
+        return Err(error_msg);
+    }
+
+    println!("[Rust] Path exists, opening OpenWith dialog...");
+
+    // 根据不同操作系统使用不同命令
+    #[cfg(target_os = "windows")]
+    {
+        println!("[Rust] Using Windows OpenWith.exe command...");
+        // Windows: 使用 OpenWith.exe 命令
+        match Command::new(r"C:\Windows\System32\OpenWith.exe")
+            .arg(&normalized_path)
+            .spawn()
+        {
+            Ok(_) => {
+                println!("[Rust] OpenWith dialog opened successfully");
+                Ok(())
+            },
+            Err(e) => {
+                let error_msg = format!("Failed to open OpenWith dialog: {}", e);
+                println!("[Rust] Error: {}", error_msg);
+                Err(error_msg)
+            }
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        println!("[Rust] Using macOS open command...");
+        // macOS: 使用 open 命令
+        match Command::new("open")
+            .args(["-a", "TextEdit", &normalized_path])  // 默认使用 TextEdit 打开
+            .spawn()
+        {
+            Ok(_) => {
+                println!("[Rust] File opened successfully");
+                Ok(())
+            },
+            Err(e) => {
+                let error_msg = format!("Failed to open file: {}", e);
+                println!("[Rust] Error: {}", error_msg);
+                Err(error_msg)
+            }
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        println!("[Rust] Using Linux xdg-open command...");
+        match Command::new("xdg-open")
+            .arg(&normalized_path)
+            .spawn()
+        {
+            Ok(_) => {
+                println!("[Rust] File opened successfully");
+                Ok(())
+            },
+            Err(e) => {
+                let error_msg = format!("Failed to open file: {}", e);
+                println!("[Rust] Error: {}", error_msg);
+                Err(error_msg)
+            }
+        }
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -851,6 +937,7 @@ pub fn run() {
         maximize_restore_window,
         close_window,
         show_in_folder,
+        open_with,
     ])
     .setup(|app| {
       #[cfg(debug_assertions)]

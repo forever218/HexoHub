@@ -679,6 +679,40 @@ ipcMain.handle('select-file', async () => {
   return filePaths[0];
 });
 
+// 使用系统"打开方式"对话框打开文件
+ipcMain.handle('open-with', async (event, filePath) => {
+  try {
+    const { exec } = require('child_process');
+    const path = require('path');
+
+    // 检查文件是否存在
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`文件不存在: ${filePath}`);
+    }
+
+    // 根据操作系统执行不同命令
+    if (process.platform === 'win32') {
+      // Windows: 使用 OpenWith.exe 命令
+      exec(`"${path.join(process.env.SYSTEMROOT || 'C:\\Windows', 'System32', 'OpenWith.exe')}" "${filePath}"`);
+    } else if (process.platform === 'darwin') {
+      // macOS: 使用 open 命令
+      exec(`open -a TextEdit "${filePath}"`);
+    } else {
+      // Linux: 使用 xdg-open 命令
+      exec(`xdg-open "${filePath}"`);
+    }
+
+    console.log(`已使用系统"打开方式"打开文件: ${filePath}`);
+    return { success: true };
+  } catch (error) {
+    console.error('打开文件失败:', error);
+    return {
+      success: false,
+      error: '打开文件失败: ' + error.message
+    };
+  }
+});
+
 // 复制文件
 ipcMain.handle('copy-file', async (event, sourcePath, destinationPath) => {
   try {
