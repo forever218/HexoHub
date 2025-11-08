@@ -1101,6 +1101,7 @@ export default function Home() {
     tags: string[];
     categories: string[];
     excerpt?: string;
+    template?: string;
   }) => {
     setIsLoading(true);
     try {
@@ -1108,6 +1109,11 @@ export default function Home() {
 
       // 构建Hexo new命令
       let command = `new "${postData.title}"`;
+      
+      // 如果使用了自定义模板，则修改命令
+      if (postData.template) {
+        command = `new ${postData.template} "${postData.title}"`;
+      }
 
       // 如果有标签或分类，创建文章后需要更新front matter
       const result = await ipcRenderer.invoke('execute-hexo-command', command, hexoPath);
@@ -3473,6 +3479,7 @@ ${selectedText}
         isLoading={isLoading}
         availableTags={availableTags}
         availableCategories={availableCategories}
+        hexoPath={hexoPath}
         language={language}
       />
       

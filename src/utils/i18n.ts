@@ -152,6 +152,9 @@ export interface I18nTexts {
   pleaseEnterTags: string;
   pleaseEnterCategories: string;
   pleaseEnterExcerpt: string;
+  useCustomTemplate: string;
+  selectTemplate: string;
+  learnMoreAboutTemplates: string;
 
   // 操作按钮
   saveArticle: string;
@@ -573,6 +576,9 @@ console.log('Hello, Hexo!');
     pleaseEnterTags: '输入标签后按回车添加',
     pleaseEnterCategories: '输入分类后按回车添加',
     pleaseEnterExcerpt: '请输入文章摘要',
+    useCustomTemplate: '使用自定义模板',
+    selectTemplate: '选择模板',
+    learnMoreAboutTemplates: '了解更多关于模板的信息',
 
     // 操作按钮
     saveArticle: '保存文章',
@@ -993,6 +999,9 @@ console.log('Hello, Hexo!');
     pleaseEnterTags: 'Enter tags and press Enter to add',
     pleaseEnterCategories: 'Enter categories and press Enter to add',
     pleaseEnterExcerpt: 'Please enter article excerpt',
+    useCustomTemplate: 'Use Custom Template',
+    selectTemplate: 'Select Template',
+    learnMoreAboutTemplates: 'Learn more about templates',
 
     // 操作按钮
     saveArticle: 'Save Article',
