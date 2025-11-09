@@ -122,19 +122,18 @@ async fn list_files(directory_path: String) -> Result<Vec<FileInfo>, String> {
             }
         }
         
-        if metadata.is_file() {
-            let modified_time = metadata.modified()
-                .map(|t| format_system_time(t))
-                .unwrap_or_else(|_| "0".to_string());
+        // 无论是文件还是目录都添加到列表中
+        let modified_time = metadata.modified()
+            .map(|t| format_system_time(t))
+            .unwrap_or_else(|_| "0".to_string());
             
-            files.push(FileInfo {
-                name: file_name,
-                path: entry.path().to_string_lossy().to_string(),
-                is_directory: false,
-                size: metadata.len(),
-                modified_time,
-            });
-        }
+        files.push(FileInfo {
+            name: file_name,
+            path: entry.path().to_string_lossy().to_string(),
+            is_directory: metadata.is_dir(),
+            size: if metadata.is_file() { metadata.len() } else { 0 },
+            modified_time,
+        });
     }
     
     Ok(files)

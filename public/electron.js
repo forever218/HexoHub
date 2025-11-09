@@ -329,15 +329,14 @@ ipcMain.handle('list-files', async (event, directoryPath) => {
       const fullPath = path.join(normalizedPath, file);
       const stats = await fs.stat(fullPath);
       
-      if (stats.isFile()) {
-        fileList.push({
-          name: file,
-          path: fullPath,
-          isDirectory: stats.isDirectory(),
-          size: stats.size,
-          modifiedTime: stats.mtime
-        });
-      }
+      // 无论是文件还是目录都添加到列表中
+      fileList.push({
+        name: file,
+        path: fullPath,
+        isDirectory: stats.isDirectory(),
+        size: stats.isFile() ? stats.size : 0,
+        modifiedTime: stats.mtime
+      });
     }
     
     return fileList;

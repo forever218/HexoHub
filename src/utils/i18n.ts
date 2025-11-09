@@ -63,6 +63,16 @@ export interface I18nTexts {
   assetFolderDisabledConfirm: string;
   assetFolderEnabledSuccess: string;
   assetFolderEnabledNextSteps: string;
+  externalEditor: string;
+  openWithExternalEditor: string;
+  externalEditorOpened: string;
+  externalEditorDescription: string;
+  reloadContent: string;
+  contentReloaded: string;
+  contentReloadedDescription: string;
+  reloadFailed: string;
+  usingExternalEditor: string;
+  externalEditorHint: string;
 
   // 占位符文本
   editorPlaceholder: string;
@@ -160,6 +170,7 @@ export interface I18nTexts {
   saveArticle: string;
   deleteArticle: string;
   viewInBrowser: string;
+  backToList: string;
 
   // 编辑器提示文本
   selectArticleToEdit: string;
@@ -452,6 +463,16 @@ export const i18nTexts: Record<Language, I18nTexts> = {
     assetFolderDisabledConfirm: '是否自动启用资源文件夹功能？\n（会修改 _config.yml 中的 post_asset_folder 为 true）',
     assetFolderEnabledSuccess: '已成功启用资源文件夹功能！',
     assetFolderEnabledNextSteps: '建议点击界面上的【清理】和【生成】按钮使更改生效。',
+    externalEditor: '外部编辑器',
+    openWithExternalEditor: '使用其他程序打开此文件',
+    externalEditorOpened: '已使用外部编辑器打开',
+    externalEditorDescription: '文件已使用系统默认程序打开，您可以在外部编辑器中进行编辑。编辑完成后，请点击"重新加载"按钮获取最新内容。',
+    reloadContent: '重新加载',
+    contentReloaded: '内容已重新加载',
+    contentReloadedDescription: '已从文件重新加载最新内容',
+    reloadFailed: '重新加载失败',
+    usingExternalEditor: '正在使用外部编辑器',
+    externalEditorHint: '文件已使用系统默认程序打开，您可以在外部编辑器中进行编辑。编辑完成后，请点击下方按钮重新加载内容。',
 
     // 占位符文本
     editorPlaceholder: `# 标题
@@ -584,6 +605,7 @@ console.log('Hello, Hexo!');
     saveArticle: '保存文章',
     deleteArticle: '删除文章',
     viewInBrowser: '在浏览器中查看',
+    backToList: '返回列表',
 
     // 编辑器提示文本
     selectArticleToEdit: '选择一篇文章开始编辑',
@@ -875,6 +897,16 @@ console.log('Hello, Hexo!');
     assetFolderDisabledConfirm: 'Would you like to enable the asset folder feature automatically?\n(This will change post_asset_folder to true in _config.yml)',
     assetFolderEnabledSuccess: 'Asset folder feature enabled successfully!',
     assetFolderEnabledNextSteps: 'Please click the [Clean] and [Generate] buttons on the interface to apply changes.',
+    externalEditor: 'External Editor',
+    openWithExternalEditor: 'Open this file with another program',
+    externalEditorOpened: 'Opened with external editor',
+    externalEditorDescription: 'The file has been opened with the system default program. You can edit it in the external editor. After editing, please click the "Reload" button to get the latest content.',
+    reloadContent: 'Reload',
+    contentReloaded: 'Content reloaded',
+    contentReloadedDescription: 'Latest content has been reloaded from the file',
+    reloadFailed: 'Reload failed',
+    usingExternalEditor: 'Using external editor',
+    externalEditorHint: 'The file has been opened with the system default program. You can edit it in the external editor. After editing, please click the button below to reload the content.',
 
     // 占位符文本
     editorPlaceholder: `# Title
@@ -1007,6 +1039,7 @@ console.log('Hello, Hexo!');
     saveArticle: 'Save Article',
     deleteArticle: 'Delete Article',
     viewInBrowser: 'View in Browser',
+    backToList: 'Back to List',
 
     // 编辑器提示文本
     selectArticleToEdit: 'Select an article to start editing',

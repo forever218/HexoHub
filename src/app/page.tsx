@@ -1046,13 +1046,28 @@ export default function Home() {
     setIsLoading(true);
     try {
       const ipcRenderer = await getIpcRenderer();
-      const files = await ipcRenderer.invoke('list-files', path + '/source/_posts');
+      // 递归获取所有markdown文件
+      const getAllMarkdownFiles = async (dirPath: string): Promise<any[]> => {
+        const files = await ipcRenderer.invoke('list-files', dirPath);
+        const markdownFiles: any[] = [];
 
-      const markdownFiles = files
-        .filter((file: any) =>
-          !file.isDirectory && (file.name.endsWith('.md') || file.name.endsWith('.markdown'))
-        )
-        .map((file: any) => {
+        for (const file of files) {
+          if (file.isDirectory) {
+            // 如果是目录，递归获取子目录中的markdown文件
+            const subDirFiles = await getAllMarkdownFiles(file.path);
+            markdownFiles.push(...subDirFiles);
+          } else if (file.name.endsWith('.md') || file.name.endsWith('.markdown')) {
+            // 如果是markdown文件，添加到结果列表
+            markdownFiles.push(file);
+          }
+        }
+
+        return markdownFiles;
+      };
+
+      const allMarkdownFiles = await getAllMarkdownFiles(path + '/source/_posts');
+
+      const markdownFiles = allMarkdownFiles.map((file: any) => {
           // 兼容 Electron 和 Tauri 两种格式
           // Electron: modifiedTime 是 Date 对象
           // Tauri: modifiedTime 是时间戳字符串
@@ -2990,13 +3005,13 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
 
                               setIsUsingExternalEditor(false);
                               toast({
-                                title: '内容已重新加载',
-                                description: '已从文件重新加载最新内容',
+                                title: t.contentReloaded,
+                                description: t.contentReloadedDescription,
                               });
                             } catch (error) {
                               console.error('重新加载内容失败:', error);
                               toast({
-                                title: '重新加载失败',
+                                title: t.reloadFailed,
                                 description: error instanceof Error ? error.message : String(error),
                                 variant: 'error',
                               });
@@ -3005,7 +3020,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                           disabled={isLoading}
                         >
                           <Download className="w-4 h-4 mr-2" />
-                          重新加载
+                          {t.reloadContent}
                         </Button>
                       ) : (
                         // 内部编辑器模式：显示所有按钮
@@ -3019,7 +3034,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                             disabled={isLoading}
                           >
                             <FileText className="w-4 h-4 mr-2" />
-                            返回列表
+                            {t.backToList}
                           </Button>
                           <Button
                             variant="outline"
@@ -3043,8 +3058,8 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
 
                                 // 提示用户
                                 toast({
-                                  title: '已使用外部编辑器打开',
-                                  description: '文件已使用系统默认程序打开，您可以在外部编辑器中进行编辑。编辑完成后，请点击"重新加载"按钮获取最新内容。',
+                                  title: t.externalEditorOpened,
+                                  description: t.externalEditorDescription,
                                   duration: 5000,
                                 });
                               } catch (error) {
@@ -3057,10 +3072,10 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                               }
                             }}
                             disabled={isLoading}
-                            title="使用其他程序打开此文件"
+                            title={t.openWithExternalEditor}
                           >
                             <ExternalLink className="w-4 h-4 mr-2" />
-                            外部编辑器
+                            {t.externalEditor}
                           </Button>
                           <Button
                             variant="outline"
@@ -3069,7 +3084,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                             disabled={isLoading}
                           >
                             <Save className="w-4 h-4 mr-2" />
-                            保存
+                            {t.saveArticle}
                           </Button>
                           <Button
                             variant="outline"
@@ -3079,7 +3094,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                             className="text-red-600 hover:text-red-700"
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
-                            删除
+                            {t.deleteArticle}
                           </Button>
                         </>
                       )}
@@ -3404,10 +3419,9 @@ ${selectedText}
                       <div className="mb-4">
                         <ExternalLink className="w-16 h-16 text-muted-foreground" />
                       </div>
-                      <h3 className="text-xl font-semibold mb-2">正在使用外部编辑器</h3>
+                      <h3 className="text-xl font-semibold mb-2">{t.usingExternalEditor}</h3>
                       <p className="text-muted-foreground mb-4 max-w-md">
-                        文件已使用系统默认程序打开，您可以在外部编辑器中进行编辑。
-                        编辑完成后，请点击下方按钮重新加载内容。
+                        {t.externalEditorHint}
                       </p>
                       <div className="flex space-x-2">
                         <Button 
@@ -3427,13 +3441,13 @@ ${selectedText}
 
                               setIsUsingExternalEditor(false);
                               toast({
-                                title: '内容已重新加载',
-                                description: '已从文件重新加载最新内容',
+                                title: t.contentReloaded,
+                                description: t.contentReloadedDescription,
                               });
                             } catch (error) {
                               console.error('重新加载内容失败:', error);
                               toast({
-                                title: '重新加载失败',
+                                title: t.reloadFailed,
                                 description: error instanceof Error ? error.message : String(error),
                                 variant: 'error',
                               });
@@ -3441,7 +3455,7 @@ ${selectedText}
                           }}
                         >
                           <Download className="w-4 h-4 mr-2" />
-                          重新加载
+                          {t.reloadContent}
                         </Button>
 
                       </div>
