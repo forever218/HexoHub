@@ -2775,7 +2775,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                   setSelectedPost(null);
                   setMainView('settings');
                 }}
-                disabled={!isValidHexoProject || isLoading}
+                disabled={isLoading}
               >
                 <Settings className="w-4 h-4 mr-2" />
                 {t.panelSettings}
@@ -2788,7 +2788,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                   setSelectedPost(null);
                   setMainView('logs');
                 }}
-                disabled={!isValidHexoProject || isLoading}
+                disabled={isLoading}
               >
                 <Terminal className="w-4 h-4 mr-2" />
                 {t.viewLogs}
