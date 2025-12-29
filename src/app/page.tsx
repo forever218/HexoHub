@@ -2233,12 +2233,12 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
       const ipcRenderer = await getIpcRenderer();
       
       // Tauri 环境使用 -C（大写）指定工作目录，Electron 保持原样，能跑就不改了
-      const gitCParam = isTauri() ? '-C' : '-c';
+      const gitCParam = isTauri() ? '-C' : '-C';
       
       // 配置Git用户信息
-      // Tauri: 使用 git -C 参数在指定目录下执行 git 命令（大写 C）
+      // Tauri: 使用 git -C 参数在指定目录下执行 git 命令（大写 ；
       // Electron: 保持原有的 -c 参数
-      const configNameResult = await ipcRenderer.invoke('execute-command', `git ${gitCParam} "${hexoPath}" config user.name "${pushUsername}"`);
+      const configNameResult = await ipcRenderer.invoke('execute-command', `git ${gitCParam} ${hexoPath} config user.name "${pushUsername}"`);
       const configNameLog = {
         ...configNameResult,
         timestamp: new Date().toLocaleString(),
@@ -2251,7 +2251,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
         throw new Error(`配置Git用户名失败: ${configNameResult.stderr || configNameResult.error || '未知错误'}`);
       }
       
-      const configEmailResult = await ipcRenderer.invoke('execute-command', `git ${gitCParam} "${hexoPath}" config user.email "${pushEmail}"`);
+      const configEmailResult = await ipcRenderer.invoke('execute-command', `git ${gitCParam} ${hexoPath} config user.email "${pushEmail}"`);
       const configEmailLog = {
         ...configEmailResult,
         timestamp: new Date().toLocaleString(),
@@ -2266,7 +2266,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
       
       // 添加远程仓库
       const remoteName = 'origin';
-      const addRemoteResult = await ipcRenderer.invoke('execute-command', `git ${gitCParam} "${hexoPath}" remote set-url ${remoteName} ${pushRepoUrl}`);
+      const addRemoteResult = await ipcRenderer.invoke('execute-command', `git ${gitCParam} ${hexoPath} remote set-url ${remoteName} ${pushRepoUrl}`);
       const addRemoteLog = {
         ...addRemoteResult,
         timestamp: new Date().toLocaleString(),
@@ -2281,7 +2281,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
       }
       
       // 添加所有文件到暂存区
-      const addResult = await ipcRenderer.invoke('execute-command', `git ${gitCParam} "${hexoPath}" add .`);
+      const addResult = await ipcRenderer.invoke('execute-command', `git ${gitCParam} ${hexoPath} add .`);
       const addLog = {
         ...addResult,
         timestamp: new Date().toLocaleString(),
@@ -2295,11 +2295,11 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
       }
       
       // 提交更改
-      const commitResult = await ipcRenderer.invoke('execute-command', `git ${gitCParam} "${hexoPath}" commit -m "Update Hexo site"`);
+      const commitResult = await ipcRenderer.invoke('execute-command', `git ${gitCParam} ${hexoPath} commit -m Update`);
       const commitLog = {
         ...commitResult,
         timestamp: new Date().toLocaleString(),
-        command: 'git commit -m "Update Hexo site"'
+        command: 'git commit -m Update'
       };
       setCommandLogs(prev => [...prev, commitLog]);
       
@@ -2310,7 +2310,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
       }
       
       // 推送到远程仓库
-      const pushResult = await ipcRenderer.invoke('execute-command', `git ${gitCParam} "${hexoPath}" push -u ${remoteName} ${pushBranch}`);
+      const pushResult = await ipcRenderer.invoke('execute-command', `git ${gitCParam} ${hexoPath} push -u ${remoteName} ${pushBranch}`);
       const pushLog = {
         ...pushResult,
         timestamp: new Date().toLocaleString(),
