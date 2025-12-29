@@ -79,6 +79,7 @@ export function PostList({ posts, selectedPost, onPostSelect, isLoading = false,
   const [showSingleTagsDialog, setShowSingleTagsDialog] = useState<boolean>(false);
   const [showSingleCategoriesDialog, setShowSingleCategoriesDialog] = useState<boolean>(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -318,7 +319,13 @@ export function PostList({ posts, selectedPost, onPostSelect, isLoading = false,
     );
   }
 
-  const sortedPosts = sortPosts(posts);
+  // 应用搜索过滤
+  const filteredBySearch = posts.filter(post => 
+    searchQuery === '' || 
+    post.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  const sortedPosts = sortPosts(filteredBySearch);
   
   // 计算分页相关数据
   const totalPages = Math.ceil(sortedPosts.length / postsPerPage);
@@ -460,6 +467,12 @@ export function PostList({ posts, selectedPost, onPostSelect, isLoading = false,
         </div>
 
         <div className="flex items-center space-x-2">
+          <Input
+            placeholder={texts.searchPlaceholder}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-48 h-8"
+          />
           <div className="text-sm text-muted-foreground">
             {texts.totalArticles.replace('{count}', posts.length.toString())}
           </div>
@@ -609,6 +622,13 @@ export function PostList({ posts, selectedPost, onPostSelect, isLoading = false,
           </div>
         ))}
       </div>
+
+      {/* 无搜索结果提示 */}
+      {searchQuery && filteredBySearch.length === 0 && (
+        <div className="flex flex-col items-center justify-center h-32 text-gray-500">
+          <div className="text-sm">{texts.noSearchResults}</div>
+        </div>
+      )}
 
       {/* 批量删除确认对话框 */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

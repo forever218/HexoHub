@@ -249,6 +249,9 @@ export interface I18nTexts {
   descending: string;
   previousPage: string;
   nextPage: string;
+  search: string;
+  searchPlaceholder: string;
+  noSearchResults: string;
 
   // 日志记录
   viewLogs: string;
@@ -684,6 +687,9 @@ console.log('Hello, Hexo!');
     descending: '降序',
     previousPage: '上一页',
     nextPage: '下一页',
+    search: '搜索',
+    searchPlaceholder: '输入文章标题搜索...',
+    noSearchResults: '未找到匹配的文章',
 
     // 日志记录
     viewLogs: '查看日志',
@@ -1118,6 +1124,9 @@ console.log('Hello, Hexo!');
     descending: 'Descending',
     previousPage: 'Previous Page',
     nextPage: 'Next Page',
+    search: 'Search',
+    searchPlaceholder: 'Search by article title...',
+    noSearchResults: 'No matching articles found',
 
     // 日志记录
     viewLogs: 'View Logs',
