@@ -14,6 +14,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip
 import { getTexts } from '@/utils/i18n';
 import { isDesktopApp, getIpcRenderer, isTauri } from '@/lib/desktop-api';
 import { openExternalLink, getAppVersion } from '@/lib/utils';
+import { copySystemInfo } from '@/lib/system-info';
 
 interface PanelSettingsProps {
   postsPerPage: number;
@@ -1102,7 +1103,25 @@ export function PanelSettings({ postsPerPage, onPostsPerPageChange, autoSaveInte
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>{t.versionInfo}</Label>
+            <div className="flex items-center justify-between">
+              <Label>{t.versionInfo}</Label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  const success = await copySystemInfo(language);
+                  toast({
+                    title: success ? t.success : t.error,
+                    description: success 
+                      ? (language === 'zh' ? '系统信息已复制到剪贴板' : 'System information copied to clipboard')
+                      : (language === 'zh' ? '复制失败，请重试' : 'Copy failed, please try again'),
+                    variant: success ? 'success' : 'error',
+                  });
+                }}
+              >
+                {language === 'zh' ? '复制系统信息' : 'Copy System Info'}
+              </Button>
+            </div>
             <p className="text-sm text-muted-foreground">HexoHub v{currentVersion}</p>
           </div>
           

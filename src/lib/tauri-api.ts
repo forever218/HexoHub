@@ -237,6 +237,25 @@ export const systemOperations = {
       console.log('[Tauri API] showInFolder result:', result);
     }
   },
+
+  // 获取系统信息
+  getSystemInfo: async (): Promise<any> => {
+    if (isTauriEnvironment()) {
+      try {
+        // 使用新的 Tauri API
+        const { type, version, arch } = await import('@tauri-apps/plugin-os');
+        return {
+          type: await type(),
+          version: await version(),
+          arch: await arch()
+        };
+      } catch (error) {
+        console.error('Failed to get system info:', error);
+        return null;
+      }
+    }
+    return null;
+  },
 };
 
 // 统一导出（兼容 Electron 风格）
@@ -275,6 +294,8 @@ export const ipcRenderer = {
         return systemOperations.openUrl(args[0]);
       case 'show-in-folder':
         return systemOperations.showInFolder(args[0]);
+      case 'get-system-info':
+        return systemOperations.getSystemInfo();
       default:
         throw new Error(`Unknown IPC channel: ${channel}`);
     }

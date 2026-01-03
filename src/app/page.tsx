@@ -2956,7 +2956,53 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                     )}
                   </div>
                   {commandLogs.length > 0 && (
-                    <div className="mt-4 flex justify-end">
+                    <div className="mt-4 flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          // 构建日志文本内容
+                          const logsText = commandLogs.map(log => {
+                            let logContent = `【${log.command}】${log.timestamp}\n`;
+                            if (log.success) {
+                              logContent += `状态: 成功\n`;
+                              if (log.stdout) logContent += `输出:\n${log.stdout.replace(/\u001b\[[0-9;]*m/g, '')}\n`;
+                            } else {
+                              logContent += `状态: 失败\n`;
+                              if (log.error) logContent += `错误: ${log.error}\n`;
+                              if (log.stderr) logContent += `错误详情:\n${log.stderr.replace(/\u001b\[[0-9;]*m/g, '')}\n`;
+                              if (log.stdout) logContent += `标准输出:\n${log.stdout.replace(/\u001b\[[0-9;]*m/g, '')}\n`;
+                            }
+                            logContent += '---\n';
+                            return logContent;
+                          }).join('\n');
+                          
+                          // 复制到剪贴板
+                          navigator.clipboard.writeText(logsText).then(() => {
+                            toast({
+                              title: t.copySuccess,
+                              description: t.logsCopiedToClipboard,
+                              variant: "default"
+                            });
+                          }).catch(() => {
+                            // 降级方案：创建文本区域并选择
+                            const textArea = document.createElement("textarea");
+                            textArea.value = logsText;
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textArea);
+                            
+                            toast({
+                              title: t.copySuccess,
+                              description: t.logsCopiedToClipboard,
+                              variant: "default"
+                            });
+                          });
+                        }}
+                      >
+                        {t.copyLogs}
+                      </Button>
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -2971,7 +3017,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
             </div>
           ) : mainView === 'posts' ? (
             selectedPost ? (
-              <div className="flex-1 flex flex-col">
+              <div className="flex-1 flex flex-col editor-container">
                 {/* 固定在顶部的编辑器控制栏 */}
                 <div className="border-b bg-card p-3 flex flex-col space-y-2 sticky top-0 z-10">
                   {/* 文章标题栏 */}
@@ -3029,6 +3075,10 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                             variant="outline"
                             size="sm"
                             onClick={() => {
+                              // 退出全屏模式
+                              if (document.fullscreenElement) {
+                                document.exitFullscreen();
+                              }
                               setSelectedPost(null);
                             }}
                             disabled={isLoading}
@@ -3039,8 +3089,74 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => {
+                              const editorContainer = document.querySelector('.editor-container') as HTMLElement;
+                              if (editorContainer) {
+                                if (document.fullscreenElement) {
+                                  document.exitFullscreen();
+                                } else {
+                                  // 保存原始样式
+                                  const originalStyle = {
+                                    height: editorContainer.style.height,
+                                    width: editorContainer.style.width,
+                                    display: editorContainer.style.display,
+                                    flexDirection: editorContainer.style.flexDirection,
+                                    zIndex: editorContainer.style.zIndex
+                                  };
+                                  
+                                  // 设置全屏样式
+                                  editorContainer.style.height = '100vh';
+                                  editorContainer.style.width = '100vw';
+                                  editorContainer.style.display = 'flex';
+                                  editorContainer.style.flexDirection = 'column';
+                                  editorContainer.style.zIndex = '9999';
+                                  
+                                  editorContainer.requestFullscreen().then(() => {
+                                    // 进入全屏后显示提示
+                                    toast({
+                                      title: "全屏模式",
+                                      description: "按 ESC 键退出全屏",
+                                      duration: 3000,
+                                    });
+                                    
+                                    // 监听全屏变化事件，退出时恢复原始样式
+                                    const handleFullscreenChange = () => {
+                                      if (!document.fullscreenElement) {
+                                        // 恢复原始样式
+                                        Object.keys(originalStyle).forEach(key => {
+                                          editorContainer.style[key] = originalStyle[key];
+                                        });
+                                        document.removeEventListener('fullscreenchange', handleFullscreenChange);
+                                      }
+                                    };
+                                    
+                                    document.addEventListener('fullscreenchange', handleFullscreenChange);
+                                  }).catch(err => {
+                                    console.error('无法进入全屏模式:', err);
+                                    // 恢复原始样式
+                                    Object.keys(originalStyle).forEach(key => {
+                                      editorContainer.style[key] = originalStyle[key];
+                                    });
+                                  });
+                                }
+                              }
+                            }}
+                            disabled={isLoading}
+                            title={t.fullscreenMode}
+                          >
+                            <Square className="w-4 h-4 mr-2" />
+                            {t.fullscreenMode}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={async () => {
                               if (!selectedPost || !isElectron) return;
+
+                              // 退出全屏模式
+                              if (document.fullscreenElement) {
+                                document.exitFullscreen();
+                              }
 
                               try {
                                 if (isTauri()) {
@@ -3080,7 +3196,10 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={savePost}
+                            onClick={() => {
+                              // 保存文章，但不退出全屏模式
+                              savePost();
+                            }}
                             disabled={isLoading}
                           >
                             <Save className="w-4 h-4 mr-2" />
@@ -3089,7 +3208,13 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={deletePost}
+                            onClick={() => {
+                              // 退出全屏模式
+                              if (document.fullscreenElement) {
+                                document.exitFullscreen();
+                              }
+                              deletePost();
+                            }}
                             disabled={isLoading}
                             className="text-red-600 hover:text-red-700"
                           >

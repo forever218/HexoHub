@@ -18,6 +18,9 @@ export interface I18nTexts {
   cleanCacheSuccess: string;
   generateStaticFilesSuccess: string;
   deploySuccess: string;
+  copySuccess: string;
+  copyToClipboard: string;
+  logsCopiedToClipboard: string;
   articleCreateSuccess: string;
   articleSaveSuccess: string;
   articleDeleteSuccess: string;
@@ -73,6 +76,7 @@ export interface I18nTexts {
   reloadFailed: string;
   usingExternalEditor: string;
   externalEditorHint: string;
+  fullscreenMode: string;
 
   // 占位符文本
   editorPlaceholder: string;
@@ -258,6 +262,7 @@ export interface I18nTexts {
   operationLogs: string;
   noLogs: string;
   clearLogs: string;
+  copyLogs: string;
   commandExecutedSuccess: string;
   commandExecutedFailed: string;
   viewLogsDetail: string;
@@ -421,6 +426,9 @@ export const i18nTexts: Record<Language, I18nTexts> = {
     cleanCacheSuccess: '清理缓存成功',
     generateStaticFilesSuccess: '生成静态文件成功',
     deploySuccess: '部署成功',
+    copySuccess: '复制成功',
+    copyToClipboard: '复制到剪贴板',
+    logsCopiedToClipboard: '日志已复制到剪贴板',
     articleCreateSuccess: '文章创建成功',
     articleSaveSuccess: '文章保存成功',
     articleDeleteSuccess: '文章删除成功',
@@ -476,6 +484,7 @@ export const i18nTexts: Record<Language, I18nTexts> = {
     reloadFailed: '重新加载失败',
     usingExternalEditor: '正在使用外部编辑器',
     externalEditorHint: '文件已使用系统默认程序打开，您可以在外部编辑器中进行编辑。编辑完成后，请点击下方按钮重新加载内容。',
+    fullscreenMode: '全屏模式',
 
     // 占位符文本
     editorPlaceholder: `# 标题
@@ -696,6 +705,7 @@ console.log('Hello, Hexo!');
     operationLogs: '操作日志',
     noLogs: '暂无日志记录',
     clearLogs: '清空日志',
+    copyLogs: '复制日志',
     commandExecutedSuccess: '✓ 命令执行成功',
     commandExecutedFailed: '✗ 命令执行失败',
     viewLogsDetail: '查看日志了解详情',
@@ -858,6 +868,9 @@ console.log('Hello, Hexo!');
     cleanCacheSuccess: 'Cache cleaned successfully',
     generateStaticFilesSuccess: 'Static files generated successfully',
     deploySuccess: 'Deployed successfully',
+    copySuccess: 'Copy successful',
+    copyToClipboard: 'Copied to clipboard',
+    logsCopiedToClipboard: 'Logs copied to clipboard',
     articleCreateSuccess: 'Article created successfully',
     articleSaveSuccess: 'Article saved successfully',
     articleDeleteSuccess: 'Article deleted successfully',
@@ -913,6 +926,7 @@ console.log('Hello, Hexo!');
     reloadFailed: 'Reload failed',
     usingExternalEditor: 'Using external editor',
     externalEditorHint: 'The file has been opened with the system default program. You can edit it in the external editor. After editing, please click the button below to reload the content.',
+    fullscreenMode: 'Fullscreen Mode',
 
     // 占位符文本
     editorPlaceholder: `# Title
@@ -1133,6 +1147,7 @@ console.log('Hello, Hexo!');
     operationLogs: 'Operation Logs',
     noLogs: 'No log records',
     clearLogs: 'Clear Logs',
+    copyLogs: 'Copy Logs',
     commandExecutedSuccess: '✓ Command executed successfully',
     commandExecutedFailed: '✗ Command execution failed',
     viewLogsDetail: 'View logs for details',

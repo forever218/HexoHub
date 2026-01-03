@@ -304,3 +304,58 @@
   top: 0;
   margin-left: 0.25rem;
 }
+
+/* 全屏模式样式 */
+.editor-container:fullscreen {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: var(--background) !important;
+  overflow: hidden !important;
+}
+
+.editor-container:fullscreen .border-b {
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.editor-container:fullscreen .flex-1 {
+  flex: 1 !important;
+  overflow: auto !important;
+}
+
+.editor-container:fullscreen textarea {
+  height: calc(100% - 40px) !important;
+  resize: none !important;
+  min-height: calc(100vh - 120px) !important;
+}
+
+.editor-container:fullscreen #line-numbers {
+  height: calc(100% - 40px) !important;
+  min-height: calc(100vh - 120px) !important;
+}
+
+/* 全屏模式下移除-200px偏移 */
+:fullscreen .editor-container,
+:fullscreen .w-full.md\:w-1\/2,
+:fullscreen .p-4,
+:fullscreen div[style*="calc(-200px"] {
+  height: 100vh !important;
+  min-height: 100vh !important;
+  max-height: 100vh !important;
+}
+
+/* 全屏模式下的所有元素 */
+:fullscreen .editor-container *,
+:fullscreen .editor-container div[style] {
+  height: unset !important;
+}
+
+/* 全屏模式下编辑器和预览区域 */
+:fullscreen .editor-container .flex-1,
+:fullscreen .editor-container textarea,
+:fullscreen .editor-container #line-numbers {
+  height: calc(100vh - 60px) !important;
+  max-height: calc(100vh - 60px) !important;
+}
+
