@@ -312,7 +312,26 @@
   width: 100vw !important;
   height: 100vh !important;
   background-color: var(--background) !important;
+  background-image: var(--bg-image, none) !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
   overflow: hidden !important;
+  position: relative !important;
+}
+
+/* 全屏模式下添加背景遮罩 */
+.editor-container:fullscreen::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-color: rgba(from var(--background) r g b / var(--bg-opacity, 0.7)) !important;
+  z-index: -1 !important;
+  pointer-events: none !important;
 }
 
 .editor-container:fullscreen .border-b {
