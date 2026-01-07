@@ -384,13 +384,9 @@ export function MarkdownPreview({ content, className = '', previewMode = 'static
     const targetUrl = iframeUrlMode === 'root' ? 'http://localhost:4000' : `http://localhost:4000/${postUrl}`;
     
     return (
-      <div className={`${className}`} style={{ minWidth: 0, width: '100%', height: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+      <div className={`${className}`} style={{ minWidth: 0, width: '100%', height: 'calc(100vh - 180px)', overflowY: 'auto' }}>
         {isServerRunning ? (
           <div className="h-full flex flex-col">
-            <div className="p-2 bg-muted text-sm text-muted-foreground flex items-center justify-between">
-              <span>服务器预览模式 - http://localhost:4000</span>
-              <span className="text-green-500">● 服务器运行中</span>
-            </div>
             {isTauriEnv ? (
               // Tauri环境：直接使用src属性
               <iframe 

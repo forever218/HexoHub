@@ -11,6 +11,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   FolderOpen,
   FileText,
   Settings,
@@ -149,9 +157,14 @@ export default function Home() {
   const [openaiApiEndpoint, setOpenaiApiEndpoint] = useState<string>('https://api.openai.com/v1'); // OpenAI API端点
   const [showInspirationDialog, setShowInspirationDialog] = useState<boolean>(false); // 是否显示灵感对话框
   const [showAnalysisDialog, setShowAnalysisDialog] = useState<boolean>(false); // 是否显示分析对话框
+  const [showDeletePostDialog, setShowDeletePostDialog] = useState<boolean>(false); // 是否显示删除文章确认对话框
   // 预览模式相关状态
   const [previewMode, setPreviewMode] = useState<'static' | 'server'>('static'); // 预览模式，默认为静态预览
   const [forcePreviewRefresh, setForcePreviewRefresh] = useState<boolean>(false); // 控制预览框强制刷新
+  
+  // 分屏比例相关状态
+  const [splitRatio, setSplitRatio] = useState<number>(0.5); // 编辑器和预览框的宽度比例，默认为50%
+  const [isDragging, setIsDragging] = useState<boolean>(false); // 是否正在拖动分隔条
 
   // 获取当前语言的文本
   const t = getTexts(language);
@@ -1340,7 +1353,7 @@ export default function Home() {
   const deletePost = async () => {
     if (!isElectron || !selectedPost) return;
 
-    if (!confirm(`确定要删除文章 "${selectedPost.name}" 吗？`)) return;
+
 
     setIsLoading(true);
     try {
@@ -1618,7 +1631,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
   const deleteSinglePost = async (postToDelete: Post) => {
     if (!isElectron || !postToDelete) return;
 
-    if (!confirm(`确定要删除文章 "${postToDelete.name}" 吗？此操作不可撤销。`)) return;
+
 
     setIsLoading(true);
     try {
@@ -3213,7 +3226,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                               if (document.fullscreenElement) {
                                 document.exitFullscreen();
                               }
-                              deletePost();
+                              setShowDeletePostDialog(true);
                             }}
                             disabled={isLoading}
                             className="text-red-600 hover:text-red-700"
@@ -3625,8 +3638,14 @@ ${selectedText}
                     </>
                   ) : (
                     // 模式2：同时显示编辑和预览，左右分栏
-                    <div className="h-full flex flex-col md:flex-row overflow-hidden" style={{ height: 'calc(100vh - 200px)' }}>
-                      <div className="w-full md:w-1/2 h-1/2 md:h-full border-r overflow-hidden">
+                    <div className="h-full flex flex-col md:flex-row overflow-hidden relative" style={{ height: 'calc(100vh - 200px)' }}>
+                      <div 
+                        className="w-full md:h-full border-r overflow-hidden"
+                        style={{ 
+                          width: `calc(${splitRatio * 100}%)`,
+                          height: 'calc(100vh - 200px)' 
+                        }}
+                      >
                         <div className="h-full overflow-hidden" style={{ height: 'calc(100vh - 200px)' }}>
                           <MarkdownEditorWrapper
                             value={postContent}
@@ -3645,7 +3664,47 @@ ${selectedText}
                           />
                         </div>
                       </div>
-                      <div className="w-full md:w-1/2 h-1/2 md:h-full overflow-auto" style={{ height: 'calc(100vh - 200px)' }}>
+                      
+                      {/* 可拖动的分隔条 */}
+                      <div
+                        className="absolute top-0 bottom-0 w-1 bg-gray-300 dark:bg-gray-600 cursor-col-resize hover:bg-blue-400 dark:hover:bg-blue-500 transition-colors z-10"
+                        style={{ left: `calc(${splitRatio * 100}% - 2px)` }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setIsDragging(true);
+                          
+                          const startX = e.clientX;
+                          const containerWidth = e.currentTarget.parentElement?.offsetWidth || 0;
+                          const startRatio = splitRatio;
+                          let dragging = true; // 本地变量跟踪拖动状态
+                          
+                          const handleMouseMove = (e: MouseEvent) => {
+                            if (!dragging) return;
+                            
+                            const deltaX = e.clientX - startX;
+                            const newRatio = Math.max(0.2, Math.min(0.8, startRatio + (deltaX / containerWidth)));
+                            setSplitRatio(newRatio);
+                          };
+                          
+                          const handleMouseUp = () => {
+                            dragging = false;
+                            setIsDragging(false);
+                            document.removeEventListener('mousemove', handleMouseMove);
+                            document.removeEventListener('mouseup', handleMouseUp);
+                          };
+                          
+                          document.addEventListener('mousemove', handleMouseMove);
+                          document.addEventListener('mouseup', handleMouseUp);
+                        }}
+                      />
+                      
+                      <div 
+                        className="w-full md:h-full overflow-auto"
+                        style={{ 
+                          width: `calc(${(1 - splitRatio) * 100}%)`,
+                          height: 'calc(100vh - 200px)' 
+                        }}
+                      >
                         <MarkdownPreview
                           content={postContent}
                           className="p-4"
@@ -3783,6 +3842,29 @@ ${selectedText}
         openaiModel={openaiModel}
         openaiApiEndpoint={openaiApiEndpoint}
       />
+
+      {/* 删除文章确认对话框 */}
+      <Dialog open={showDeletePostDialog} onOpenChange={setShowDeletePostDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.confirmDelete}</DialogTitle>
+            <DialogDescription>
+              确定要删除文章 "{selectedPost?.name.replace(/\.(md|markdown)$/, '') || '当前文章'}" 吗？此操作不可撤销。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeletePostDialog(false)}>
+              {t.cancel}
+            </Button>
+            <Button variant="destructive" onClick={() => {
+              setShowDeletePostDialog(false);
+              deletePost();
+            }}>
+              {t.confirmDelete}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
     </div>
   );
