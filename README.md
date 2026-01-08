@@ -28,10 +28,16 @@
   />
 </div>
 
+# 特点
+- **小巧**：选择tauri框架下的发行版（推荐），安装包仅为 5.8MB，安装后应用程序大小仅为 20MB 
+- **轻量**：基于Next.js ，React ，TypeScript ，Tauri ，轻量且高效
+- **快速**：快速启动，快速响应，无冗余设计
+- **简洁**：简洁的UI设计，专注于博客
+- **智能**：集成了AI功能，辅助您的创作
 
 
 
-
+# 功能
 ## 文章管理
 
 在本应用程序中，您可以可视化的：**创建新文章**，**查看文章列表** ，**编辑文章**，**实时预览**，**启动本地预览**，**生成并推送静态文件**，**删除文章**
@@ -71,15 +77,14 @@
 **YAML 编辑**：支持直接编辑原始配置文件  
 **导入/导出**：配置文件的备份和恢复，更加方便您主题的迁移
 
-## AI加持
-在本应用程序中，多个地方集成了AI功能，包括：AI灵感、AI分析（分析您的博客历程）、AI写作（重写、改写、拓展）等，享受AI带来的便捷和高效！
+
 
 #  快速开始  
 ## 使用
 
 如果您只需“使用”本应用程序：   
 - **操作系统**: Windows 10 或更高版本    
-- **存储**: 建议 900MB 可用空间  
+- **存储**: 建议 200MB 可用空间  
 - **Hexo**：https://hexo.io/
 - **Npm**：`npm>10`    👉https://www.npmjs.com/
 - **Node.js**：`nodejs>20`    👉https://nodejs.org/zh-cn/   
@@ -92,7 +97,7 @@
 - **Git**：https://git-scm.com/   
 - **nodejs**：`TypeScript>4.5`，`React>19`，`Next.js>15`   
 
-⚠️ 出于速度考虑，我在开发过程中使用的是`cnpm`，并且修改了部分`package.json`内容，请您在使用时酌情考虑，如果要使用`cnpm`，请执行：  
+> ⚠️ 出于速度考虑，我在开发过程中使用的是`cnpm`，并且修改了部分`package.json`内容，请您在使用时酌情考虑，如果要使用`cnpm`，请执行：  
 
 ```bash
 npm install -g cnpm --registry=http://registry.npm.taobao.org
@@ -100,87 +105,14 @@ npm install -g cnpm --registry=http://registry.npm.taobao.org
 
 随后即可用`cnpm`代替`npm`
 
-### Electron 版本开发
 
-1. **克隆本仓库**
-   ```bash
-   git clone https://github.com/forever218/HexoHub.git
-   ```
 
-2. **安装依赖**
-   ```bash
-   npm install
-   ```
-
-3. **开发模式运行**，到这一步就已经可以使用了
-   ```bash
-   npm run electron
-   ```
-
-4. **打包应用**（非必须）
-   ```bash
-   npm run build
-   npm run make
-   ```
-
-> **注意**：本应用程序通过`electron-builder`封装，而不是`electron-forge`，在您修改相关配置文件时，请注意使用`electron-builder`的配置文件格式。[electron-builder](https://www.electron.build/)
-
-### Tauri 版本开发
-
-项目现在支持使用 Tauri 作为桌面应用框架，具有小得多的体积和更好的性能。
-
-1. **切换到 Tauri 分支**
-   ```bash
-   git checkout tauri
-   ```
-
-2. **安装依赖**
-   ```bash
-   npm install
-   ```
-
-3. **开发模式运行**
-   ```bash
-   npm run tauri:dev
-   ```
-
-4. **构建生产版本**
-   ```bash
-   npm run tauri:build
-   ```
-
-> **注意**：Tauri 版本需要安装 Rust 工具链。首次运行时会自动下载安装。详细开发指南请参考 [Tauri 开发指南](./docs/TAURI_DEVELOPMENT.md)。
 
 ### 📦 自动化发布流程
 
 项目已配置 GitHub Actions 自动化发布流程。维护者在准备发布新版本时，只需推送版本标签即可自动构建和发布 Windows、Linux 安装包。详细步骤请参考 [📦 发布指南](./docs/RELEASE_GUIDE.md)。
 
-## Linux 兼容性与故障排查
-当前已经提供 AppImage（内部为 Electron 运行时）。在部分基于 Arch / Manjaro / Wayland 或 Mesa 驱动环境中，可能在终端看到：
-
-```
-GetVSyncParametersIfAvailable() failed for X times!
-```
-
-这一般是 Chromium 在获取 VSync 时间戳失败产生的日志，不影响核心功能。如果你希望减少或消除：
-
-1. 已在程序内部默认添加了 `--disable-gpu-vsync` 等参数，正常情况下只是偶尔出现。
-2. 如果仍大量出现或出现黑屏 / 空白窗口，可临时禁用 GPU：
-  ```bash
-  HEXOHUB_DISABLE_GPU=1 ./HexoHub-<版本>.AppImage
-  ```
-3. Wayland 会话下如果窗口行为异常，可尝试切换到 X11（或反之）。
-4. 如果使用远程桌面 / 无物理 GPU（llvmpipe），建议直接使用上面禁用 GPU 的方式。
-
-反馈 Bug 时请附上：
-```
-操作系统发行版/版本：
-桌面环境（GNOME/KDE/...）及会话（X11/Wayland）：
-是否使用独显/NVIDIA 专有驱动：
-终端运行是否需要 HEXOHUB_DISABLE_GPU：是/否
-``` 
-
-如果确认禁用 GPU 后问题完全消失，可以提 Issue，我们会考虑自动检测更多场景。 
+ 
 
 
 # 技术栈

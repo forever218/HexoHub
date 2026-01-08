@@ -27,6 +27,8 @@ Tauri 版本相比 Electron 版本减少了 **94.5%** 的体积！
 - **Rust**: `>=1.70` (自动安装)
 - **Cargo**: Rust 包管理器 (随 Rust 一起安装)
 
+> **注意**：Tauri 版本需要安装 Rust 工具链。首次运行时会自动下载安装。详细开发指南请参考 [Tauri 开发指南](./docs/TAURI_DEVELOPMENT.md)。
+
 ## 快速开始
 
 ### 1. 切换到 Tauri 分支
