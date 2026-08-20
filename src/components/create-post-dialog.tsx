@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { X, ChevronDown, HelpCircle } from 'lucide-react';
+import { X, ChevronDown, HelpCircle, Plus } from 'lucide-react';
 import { Language, getTexts } from '@/utils/i18n';
 import { isDesktopApp, getIpcRenderer } from '@/lib/desktop-api';
 
@@ -19,6 +19,7 @@ interface CreatePostDialogProps {
     categories: string[];
     excerpt?: string;
     template?: string;
+    customFields?: Record<string, string>;
   }) => void;
   isLoading?: boolean;
   availableTags?: string[];
@@ -41,6 +42,10 @@ export function CreatePostDialog({ open, onOpenChange, onConfirm, isLoading = fa
   const [availableTemplates, setAvailableTemplates] = useState<string[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState('post');
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
+  const [customFields, setCustomFields] = useState<{key: string; defaultValue: string}[]>([]);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
+  const [enableUserCustomFields, setEnableUserCustomFields] = useState(false);
+  const [userCustomFields, setUserCustomFields] = useState<{key: string; value: string; persist: boolean}[]>([]);
   const tagDropdownRef = useRef<HTMLDivElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const templateDropdownRef = useRef<HTMLDivElement>(null);
@@ -103,13 +108,41 @@ export function CreatePostDialog({ open, onOpenChange, onConfirm, isLoading = fa
       return;
     }
 
+    // Collect non-empty custom field values from template fields
+    const allCustomFields: Record<string, string> = {};
+    Object.entries(customFieldValues).forEach(([key, value]) => {
+      if (value.trim()) {
+        allCustomFields[key] = value.trim();
+      }
+    });
+
+    // Merge user-defined custom fields (override template fields on conflict)
+    if (enableUserCustomFields) {
+      userCustomFields.forEach(f => {
+        if (f.key.trim() && f.value.trim()) {
+          allCustomFields[f.key.trim()] = f.value.trim();
+        }
+      });
+    }
+
     onConfirm({
       title: title.trim(),
       tags,
       categories,
       excerpt: excerpt.trim() || undefined,
-      template: useCustomTemplate ? selectedTemplate : undefined
+      template: useCustomTemplate ? selectedTemplate : undefined,
+      customFields: Object.keys(allCustomFields).length > 0 ? allCustomFields : undefined
     });
+
+    // Save persisted custom fields to localStorage
+    if (enableUserCustomFields) {
+      const toPersist = userCustomFields
+        .filter(f => f.persist && f.key.trim() && f.value.trim())
+        .map(f => ({ key: f.key.trim(), value: f.value.trim() }));
+      localStorage.setItem('persisted-custom-frontmatter', JSON.stringify(toPersist));
+    } else {
+      localStorage.removeItem('persisted-custom-frontmatter');
+    }
 
     // 重置表单
     setTitle('');
@@ -120,6 +153,63 @@ export function CreatePostDialog({ open, onOpenChange, onConfirm, isLoading = fa
     setCategoryInput('');
     setUseCustomTemplate(false);
     setSelectedTemplate('post');
+    setCustomFieldValues({});
+    setEnableUserCustomFields(false);
+    setUserCustomFields([]);
+  };
+
+  // Built-in fields that are already handled by dedicated inputs
+  const BUILTIN_FIELDS = ['title', 'date', 'tags', 'categories', 'excerpt'];
+
+  // Parse front matter from template content to extract custom fields
+  const parseTemplateFields = (content: string) => {
+    const frontMatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+    if (!frontMatterMatch) return [];
+
+    const frontMatter = frontMatterMatch[1];
+    const fields: {key: string; defaultValue: string}[] = [];
+
+    const lines = frontMatter.split('\n');
+    for (const line of lines) {
+      // Match simple key: value pairs (skip list items like "  - xxx")
+      const match = line.match(/^([a-zA-Z_][a-zA-Z0-9_]*):\s*(.*)$/);
+      if (match) {
+        const key = match[1];
+        const value = match[2].trim();
+        if (!BUILTIN_FIELDS.includes(key)) {
+          fields.push({ key, defaultValue: value });
+        }
+      }
+    }
+    return fields;
+  };
+
+  // Load template content and extract custom fields
+  const loadTemplateFields = async (templateName: string) => {
+    if (!hexoPath || !isDesktopApp()) return;
+
+    try {
+      const ipcRenderer = await getIpcRenderer();
+      const templatePath = `${hexoPath}/scaffolds/${templateName}.md`;
+      const content = await ipcRenderer.invoke('read-file', templatePath);
+      if (content) {
+        const fields = parseTemplateFields(content);
+        setCustomFields(fields);
+        // Initialize custom field values with defaults
+        const defaults: Record<string, string> = {};
+        fields.forEach(f => {
+          // Don't use template placeholders like {{ title }} as defaults
+          if (f.defaultValue && !f.defaultValue.match(/\{\{.*\}\}/)) {
+            defaults[f.key] = f.defaultValue;
+          } else {
+            defaults[f.key] = '';
+          }
+        });
+        setCustomFieldValues(defaults);
+      }
+    } catch (error) {
+      console.error('读取模板内容失败:', error);
+    }
   };
 
   // 获取可用模板
@@ -154,6 +244,32 @@ export function CreatePostDialog({ open, onOpenChange, onConfirm, isLoading = fa
     }
   }, [open, hexoPath]);
 
+  // Load custom fields from the selected template (default: post)
+  useEffect(() => {
+    if (open && hexoPath) {
+      const templateToLoad = useCustomTemplate ? selectedTemplate : 'post';
+      loadTemplateFields(templateToLoad);
+    }
+  }, [open, hexoPath, useCustomTemplate, selectedTemplate]);
+
+  // Load persisted custom front-matter fields from localStorage
+  useEffect(() => {
+    if (open) {
+      try {
+        const stored = localStorage.getItem('persisted-custom-frontmatter');
+        if (stored) {
+          const persisted: {key: string; value: string}[] = JSON.parse(stored);
+          if (persisted.length > 0) {
+            setEnableUserCustomFields(true);
+            setUserCustomFields(persisted.map(f => ({ key: f.key, value: f.value, persist: true })));
+          }
+        }
+      } catch (e) {
+        console.error('读取持久化自定义字段失败:', e);
+      }
+    }
+  }, [open]);
+
   // 点击外部关闭下拉菜单
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -184,6 +300,9 @@ export function CreatePostDialog({ open, onOpenChange, onConfirm, isLoading = fa
     setCategoryInput('');
     setUseCustomTemplate(false);
     setSelectedTemplate('post');
+    setCustomFieldValues({});
+    setEnableUserCustomFields(false);
+    setUserCustomFields([]);
     onOpenChange(false);
   };
 
@@ -354,6 +473,27 @@ export function CreatePostDialog({ open, onOpenChange, onConfirm, isLoading = fa
             />
           </div>
 
+          {/* 自定义字段 (from scaffolds template) */}
+          {customFields.length > 0 && (
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                {language === 'zh' ? '模板自定义字段' : 'Template Custom Fields'}
+              </Label>
+              {customFields.map((field) => (
+                <div key={field.key} className="space-y-1">
+                  <Label htmlFor={`custom-${field.key}`} className="text-sm">{field.key}</Label>
+                  <Input
+                    id={`custom-${field.key}`}
+                    value={customFieldValues[field.key] || ''}
+                    onChange={(e) => setCustomFieldValues(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    placeholder={field.defaultValue || `${language === 'zh' ? '请输入' : 'Enter'} ${field.key}`}
+                    disabled={isLoading}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* 模板选项 */}
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
@@ -424,6 +564,93 @@ export function CreatePostDialog({ open, onOpenChange, onConfirm, isLoading = fa
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* 自定义 Front-Matter 字段 */}
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="enable-user-custom-fields"
+                checked={enableUserCustomFields}
+                onCheckedChange={(checked) => {
+                  setEnableUserCustomFields(!!checked);
+                  if (!checked) {
+                    setUserCustomFields([]);
+                  }
+                }}
+                disabled={isLoading}
+              />
+              <Label htmlFor="enable-user-custom-fields">{texts.customFrontMatter}</Label>
+            </div>
+
+            {enableUserCustomFields && (
+              <div className="space-y-3 ml-6">
+                {userCustomFields.map((field, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      value={field.key}
+                      onChange={(e) => {
+                        const newFields = [...userCustomFields];
+                        newFields[index] = { ...newFields[index], key: e.target.value };
+                        setUserCustomFields(newFields);
+                      }}
+                      placeholder={texts.fieldName}
+                      disabled={isLoading}
+                      className="flex-1"
+                    />
+                    <Input
+                      value={field.value}
+                      onChange={(e) => {
+                        const newFields = [...userCustomFields];
+                        newFields[index] = { ...newFields[index], value: e.target.value };
+                        setUserCustomFields(newFields);
+                      }}
+                      placeholder={texts.fieldValue}
+                      disabled={isLoading}
+                      className="flex-1"
+                    />
+                    <div className="flex items-center space-x-1 shrink-0">
+                      <Checkbox
+                        id={`persist-field-${index}`}
+                        checked={field.persist}
+                        onCheckedChange={(checked) => {
+                          const newFields = [...userCustomFields];
+                          newFields[index] = { ...newFields[index], persist: !!checked };
+                          setUserCustomFields(newFields);
+                        }}
+                        disabled={isLoading}
+                      />
+                      <Label htmlFor={`persist-field-${index}`} className="text-xs whitespace-nowrap">{texts.persistField}</Label>
+                    </div>
+                    <button
+                      type="button"
+                      className="shrink-0 rounded-full p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      onClick={() => {
+                        setUserCustomFields(userCustomFields.filter((_, i) => i !== index));
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setUserCustomFields([...userCustomFields, { key: '', value: '', persist: false }]);
+                  }}
+                  disabled={isLoading}
+                  className="flex items-center gap-1"
+                >
+                  <Plus className="w-4 h-4" />
+                  {texts.addCustomField}
+                </Button>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  * {texts.persistFieldHint}
+                </p>
               </div>
             )}
           </div>
