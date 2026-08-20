@@ -1,6 +1,6 @@
 [package]
 name = "hexohub"
-version = "3.6.1"
+version = "3.7.0"
 description = "HexoHub Desktop Application - A modern Hexo blog management tool"
 authors = ["HexoHub Project"]
 license = "MIT"
