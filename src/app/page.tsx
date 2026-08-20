@@ -1189,6 +1189,7 @@ export default function Home() {
     categories: string[];
     excerpt?: string;
     template?: string;
+    customFields?: Record<string, string>;
   }) => {
     setIsLoading(true);
     try {
@@ -1221,8 +1222,8 @@ export default function Home() {
           variant: 'success',
         });
         
-        // 如果有额外的标签、分类或摘要，需要更新文件
-        if (postData.tags.length > 0 || postData.categories.length > 0 || postData.excerpt) {
+        // 如果有额外的标签、分类、摘要或自定义字段，需要更新文件
+        if (postData.tags.length > 0 || postData.categories.length > 0 || postData.excerpt || postData.customFields) {
           await updatePostFrontMatter(postData);
         }
 
@@ -1267,6 +1268,7 @@ export default function Home() {
     tags: string[];
     categories: string[];
     excerpt?: string;
+    customFields?: Record<string, string>;
   }) => {
     try {
       const ipcRenderer = await getIpcRenderer();
@@ -1306,6 +1308,22 @@ export default function Home() {
         // 添加摘要
         if (postData.excerpt) {
           frontMatter += `\nexcerpt: "${postData.excerpt}"`;
+        }
+
+        // 添加自定义字段
+        if (postData.customFields) {
+          Object.entries(postData.customFields).forEach(([key, value]) => {
+            // Check if the field already exists in front matter
+            const fieldRegex = new RegExp(`^${key}:\\s*(.*)$`, 'm');
+            const fieldMatch = frontMatter.match(fieldRegex);
+            if (fieldMatch) {
+              // Replace existing field value
+              frontMatter = frontMatter.replace(fieldRegex, `${key}: ${value}`);
+            } else {
+              // Add new field
+              frontMatter += `\n${key}: ${value}`;
+            }
+          });
         }
 
         // 重新构建文件内容

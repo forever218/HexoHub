@@ -169,6 +169,12 @@ export interface I18nTexts {
   useCustomTemplate: string;
   selectTemplate: string;
   learnMoreAboutTemplates: string;
+  customFrontMatter: string;
+  fieldName: string;
+  fieldValue: string;
+  persistField: string;
+  persistFieldHint: string;
+  addCustomField: string;
 
   // 操作按钮
   saveArticle: string;
@@ -625,6 +631,12 @@ console.log('Hello, Hexo!');
     useCustomTemplate: '使用自定义模板',
     selectTemplate: '选择模板',
     learnMoreAboutTemplates: '了解更多关于模板的信息',
+    customFrontMatter: '添加自定义 Front-Matter 字段',
+    fieldName: '字段名',
+    fieldValue: '字段值',
+    persistField: '持久化',
+    persistFieldHint: '勾选后以后新建文章都会默认添加该字段',
+    addCustomField: '添加字段',
 
     // 操作按钮
     saveArticle: '保存文章',
@@ -1080,6 +1092,12 @@ console.log('Hello, Hexo!');
     useCustomTemplate: 'Use Custom Template',
     selectTemplate: 'Select Template',
     learnMoreAboutTemplates: 'Learn more about templates',
+    customFrontMatter: 'Add Custom Front-Matter Fields',
+    fieldName: 'Field Name',
+    fieldValue: 'Field Value',
+    persistField: 'Persist',
+    persistFieldHint: 'When checked, this field will be added to all new articles by default',
+    addCustomField: 'Add Field',
 
     // 操作按钮
     saveArticle: 'Save Article',
